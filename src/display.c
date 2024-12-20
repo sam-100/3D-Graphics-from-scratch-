@@ -29,7 +29,7 @@ bool initialize_window(void) {
 		SDL_WINDOWPOS_CENTERED, 
 		window_width, 
 		window_height, 
-		SDL_WINDOW_BORDERLESS
+		SDL_WINDOW_RESIZABLE
 	);
 	if(!window)
 	{
@@ -51,7 +51,6 @@ bool initialize_window(void) {
 }
 
 void destroy_window(void) {
-	free(color_buffer);
 	SDL_DestroyTexture(color_buffer_texture);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
@@ -83,7 +82,7 @@ void render_color_buffer(void) {
 void draw_grid(void) {
 	for(int y=0; y<window_height; y += 10)
 		for(int x=0; x<window_width; x += 10)
-				color_buffer[y*window_width + x] = 0xff555555;
+				draw_pixel(x, y, 0xff555555);
 }
 
 void draw_pixel(int x, int y, uint32_t color) {
@@ -102,54 +101,76 @@ void draw_rect(int x, int y, int width, int height, uint32_t color) {
 
 
 
-void draw_line(vec2_t a, vec2_t b, uint32_t color) {
-	// Handle special lines
-	if(a.x == b.x)
-	{
-		for(int y = a.y; y != b.y; y += abs(b.y-a.y)/(b.y-a.y))
-			draw_pixel(a.x, y, color);
-	}
-	if(a.y == b.y)
-	{
-		for(int x = a.x; x != b.x; x += abs(b.x-a.x)/(b.x-a.x))
-			draw_pixel(x, a.y, color);
-	}
+// void draw_line(vec2_t a, vec2_t b, uint32_t color) {
+// 	// Handle special lines
+// 	if(a.x == b.x)
+// 	{
+// 		for(int y = a.y; y != b.y; y += abs(b.y-a.y)/(b.y-a.y))
+// 			draw_pixel(a.x, y, color);
+// 		return;
+// 	}
+// 	if(a.y == b.y)
+// 	{
+// 		for(int x = a.x; x != b.x; x += abs(b.x-a.x)/(b.x-a.x))
+// 			draw_pixel(x, a.y, color);
+// 		return;
+// 	}
 
-	// Handle general lines
-	double m = (b.y-a.y)/(b.x-a.x);
-	if(m >= -1 && m <= 1)
-	{
-		if(a.x > b.x)
-		{
-			draw_line(b, a, color);
-			return;
-		}
-		double dx = 1, dy = m;
-		double x = a.x, y = a.y;
-		while( x <= b.x)
-		{
-			x += dx;
-			y += dy;
-			draw_pixel((int)x, (int)y, color);
-		}
-	}
-	else
-	{
-		if(a.y > b.y)
-		{
-			draw_line(b, a, color);
-			return;
-		}
-		double dx = 1/m, dy = 1;
-		double x = a.x, y = a.y;
-		while(y <= b.y)
-		{
-			x += dx;
-			y += dy;
-			draw_pixel((int)x, (int)y, color);
-		}
-	}
+// 	// Handle general lines
+// 	double m = (b.y-a.y)/(b.x-a.x);
+// 	if(m >= -1 && m <= 1)
+// 	{
+// 		if(a.x > b.x)
+// 		{
+// 			draw_line(b, a, color);
+// 			return;
+// 		}
+// 		double dx = 1, dy = m;
+// 		double x = a.x, y = a.y;
+// 		while( x <= b.x)
+// 		{
+// 			x += dx;
+// 			y += dy;
+// 			draw_pixel((int)x, (int)y, color);
+// 		}
+// 	}
+// 	else
+// 	{
+// 		if(a.y > b.y)
+// 		{
+// 			draw_line(b, a, color);
+// 			return;
+// 		}
+// 		double dx = 1/m, dy = 1;
+// 		double x = a.x, y = a.y;
+// 		while(y <= b.y)
+// 		{
+// 			x += dx;
+// 			y += dy;
+// 			draw_pixel((int)x, (int)y, color);
+// 		}
+// 	}
+// }
+
+void draw_line(vec2_t a, vec2_t b, uint32_t color) {
+    int delta_x = (b.x - a.x);
+    int delta_y = (b.y - a.y);
+
+    int longest_side_length = (abs(delta_x) >= abs(delta_y)) ? abs(delta_x) : abs(delta_y);
+
+    float x_inc = delta_x / (float)longest_side_length; 
+    float y_inc = delta_y / (float)longest_side_length;
+
+    float current_x = a.x;
+    float current_y = a.y;
+    for (int i = 0; i <= longest_side_length; i++) {
+        draw_pixel(round(current_x), round(current_y), color);
+        current_x += x_inc;
+        current_y += y_inc;
+    }
 }
+
+
 
 void draw_triangle(triangle_t triangle, uint32_t color) {
 	draw_line(triangle.vertices[0], triangle.vertices[1], color);
