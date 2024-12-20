@@ -100,3 +100,59 @@ void draw_rect(int x, int y, int width, int height, uint32_t color) {
 			draw_pixel(j, i, color);
 }
 
+
+
+void draw_line(vec2_t a, vec2_t b, uint32_t color) {
+	// Handle special lines
+	if(a.x == b.x)
+	{
+		for(int y = a.y; y != b.y; y += abs(b.y-a.y)/(b.y-a.y))
+			draw_pixel(a.x, y, color);
+	}
+	if(a.y == b.y)
+	{
+		for(int x = a.x; x != b.x; x += abs(b.x-a.x)/(b.x-a.x))
+			draw_pixel(x, a.y, color);
+	}
+
+	// Handle general lines
+	double m = (b.y-a.y)/(b.x-a.x);
+	if(m >= -1 && m <= 1)
+	{
+		if(a.x > b.x)
+		{
+			draw_line(b, a, color);
+			return;
+		}
+		double dx = 1, dy = m;
+		double x = a.x, y = a.y;
+		while( x <= b.x)
+		{
+			x += dx;
+			y += dy;
+			draw_pixel((int)x, (int)y, color);
+		}
+	}
+	else
+	{
+		if(a.y > b.y)
+		{
+			draw_line(b, a, color);
+			return;
+		}
+		double dx = 1/m, dy = 1;
+		double x = a.x, y = a.y;
+		while(y <= b.y)
+		{
+			x += dx;
+			y += dy;
+			draw_pixel((int)x, (int)y, color);
+		}
+	}
+}
+
+void draw_triangle(triangle_t triangle, uint32_t color) {
+	draw_line(triangle.vertices[0], triangle.vertices[1], color);
+	draw_line(triangle.vertices[1], triangle.vertices[2], color);
+	draw_line(triangle.vertices[2], triangle.vertices[0], color);
+}
