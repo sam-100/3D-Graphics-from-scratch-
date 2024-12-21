@@ -18,6 +18,19 @@ extern SDL_Texture *color_buffer_texture;
 extern int window_width;
 extern int window_height;
 
+enum cull_method {
+    CULL_NONE, 
+    CULL_BACKFACE
+} cull_method;
+
+enum render_method {
+    RENDER_WIRE, 
+    RENDER_WIRE_VERTEX, 
+    RENDER_FILL_TRIANGLE, 
+    RENDER_FILL_TRIANGLE_WIRE
+} render_method;
+
+
 bool initialize_window(void);
 void destroy_window(void);
 void clear_color_buffer(uint32_t color);

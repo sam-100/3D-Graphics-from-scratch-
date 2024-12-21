@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "mesh.h": "c",
-        "random": "c"
+        "random": "c",
+        "display.h": "c"
     }
 }
