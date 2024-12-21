@@ -46,57 +46,6 @@ void process_input(void) {
 			is_running = false;
 			break;
 		}
-		// if( event.key.keysym.sym == SDLK_RIGHT )
-		// {
-		// 	camera_pos.x += 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_LEFT )
-		// {
-		// 	camera_pos.x -= 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_DOWN )
-		// {
-		// 	camera_pos.z -= 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_UP )
-		// {
-		// 	camera_pos.z += 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_a )
-		// {
-		// 	mesh.rotation.x += 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_s )
-		// {
-		// 	mesh.rotation.y += 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_d )
-		// {
-		// 	mesh.rotation.z += 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_q )
-		// {
-		// 	mesh.rotation.x -= 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_w )
-		// {
-		// 	mesh.rotation.y -= 0.1;
-		// 	break;
-		// }
-		// if( event.key.keysym.sym == SDLK_e )
-		// {
-		// 	mesh.rotation.z -= 0.1;
-		// 	break;
-		// }
-
 		if( event.key.keysym.sym == SDLK_1 )
 		{
 			render_method = RENDER_WIRE_VERTEX;
@@ -194,10 +143,14 @@ void update(void) {
 				vec3_sub(transformed_vertices[1], transformed_vertices[0]), 
 				vec3_sub(transformed_vertices[2], transformed_vertices[0])
 			);
+			vec3_normalize(&camera_ray);
 			vec3_normalize(&normal);
 			if(vec3_dot(camera_ray, normal) < 0)
 				continue;
 		}
+
+		// Find the avg_depth of face
+		float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z)/3;
 
 		// Project all vertices of current triangle
 		vec2_t projected_vertices[3];
@@ -211,17 +164,33 @@ void update(void) {
 			projected_vertices[j].y += window_height/2;
 		}
 
+		// Push projected triangle to triangles_to_render array
 		triangle_t projected_triangle = {
 			.vertices = {
 				{projected_vertices[0].x, projected_vertices[0].y}, 
 				{projected_vertices[1].x, projected_vertices[1].y}, 
 				{projected_vertices[2].x, projected_vertices[2].y}
 			}, 
-			.color = face.color
+			.color = face.color, 
+			.avg_depth = avg_depth
 		};
-
 		array_push(triangles_to_render, projected_triangle);
 	}
+
+	// Sort all triangles to render in dsc order of their avg_depth
+	int num_triangles = array_length(triangles_to_render);
+	for(int i=0; i<num_triangles; i++)
+		for(int j=0; j<num_triangles-i-1; j++)
+		{
+			if(triangles_to_render[j+1].avg_depth > triangles_to_render[j].avg_depth)
+			{
+				// swap
+				triangle_t temp;
+				temp = triangles_to_render[j];
+				triangles_to_render[j] = triangles_to_render[j+1];
+				triangles_to_render[j+1] = temp;
+			}
+		}
 }
 
 uint32_t colors[6] = {0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00, 0xffff00ff, 0xff00ffff};
@@ -240,7 +209,7 @@ void render(void) {
 		case RENDER_WIRE_VERTEX:
 			draw_triangle(triangle, 0xffffffff);
 			for(int j=0; j<3; j++)
-				draw_rect(triangle.vertices[j].x, triangle.vertices[j].y, 3, 3, 0xffff00ff);
+				draw_rect(triangle.vertices[j].x, triangle.vertices[j].y, 5, 5, 0xffff00ff);
 			break;
 		case RENDER_WIRE:
 			draw_triangle(triangle, 0xffffffff);
