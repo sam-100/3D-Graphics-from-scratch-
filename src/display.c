@@ -5,8 +5,8 @@ SDL_Renderer *renderer = NULL;
 uint32_t *color_buffer = NULL;
 SDL_Texture *color_buffer_texture = NULL;
 
-int window_width = 800;
-int window_height = 600;
+int window_width = 1000;
+int window_height = 800;
 int rect_x = 200, rect_y = 100;
 int rect_width = 100, rect_height = 100;
 
@@ -20,8 +20,8 @@ bool initialize_window(void) {
 	// Query SDL to get the display size
 	SDL_DisplayMode display_mode;
 	SDL_GetDisplayMode(0, 0, &display_mode);
-	window_width = display_mode.w;
-	window_height = display_mode.h;
+	// window_width = display_mode.w;
+	// window_height = display_mode.h;
 
 	// Create SDL window
 	window = SDL_CreateWindow("Hello Window!", 
@@ -45,7 +45,7 @@ bool initialize_window(void) {
 		return false;
 	}
 
-	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+	// SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
 	return true;
 }
@@ -99,58 +99,6 @@ void draw_rect(int x, int y, int width, int height, uint32_t color) {
 			draw_pixel(j, i, color);
 }
 
-
-
-// void draw_line(vec2_t a, vec2_t b, uint32_t color) {
-// 	// Handle special lines
-// 	if(a.x == b.x)
-// 	{
-// 		for(int y = a.y; y != b.y; y += abs(b.y-a.y)/(b.y-a.y))
-// 			draw_pixel(a.x, y, color);
-// 		return;
-// 	}
-// 	if(a.y == b.y)
-// 	{
-// 		for(int x = a.x; x != b.x; x += abs(b.x-a.x)/(b.x-a.x))
-// 			draw_pixel(x, a.y, color);
-// 		return;
-// 	}
-
-// 	// Handle general lines
-// 	double m = (b.y-a.y)/(b.x-a.x);
-// 	if(m >= -1 && m <= 1)
-// 	{
-// 		if(a.x > b.x)
-// 		{
-// 			draw_line(b, a, color);
-// 			return;
-// 		}
-// 		double dx = 1, dy = m;
-// 		double x = a.x, y = a.y;
-// 		while( x <= b.x)
-// 		{
-// 			x += dx;
-// 			y += dy;
-// 			draw_pixel((int)x, (int)y, color);
-// 		}
-// 	}
-// 	else
-// 	{
-// 		if(a.y > b.y)
-// 		{
-// 			draw_line(b, a, color);
-// 			return;
-// 		}
-// 		double dx = 1/m, dy = 1;
-// 		double x = a.x, y = a.y;
-// 		while(y <= b.y)
-// 		{
-// 			x += dx;
-// 			y += dy;
-// 			draw_pixel((int)x, (int)y, color);
-// 		}
-// 	}
-// }
 
 void draw_line(vec2_t a, vec2_t b, uint32_t color) {
     int delta_x = (b.x - a.x);

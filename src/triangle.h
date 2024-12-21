@@ -1,10 +1,10 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
+#include "vector.h"
+
 typedef struct {
-    int a;
-    int b;
-    int c;
+    int a, b, c;
 } face_t;
 
 typedef struct {

@@ -26,7 +26,6 @@ void setup(void) {
 	);
 
 	// Load the cube in our mesh data structure 
-	// load_cube_mesh_data();	
 	load_obj_file_data("./assets/f22.obj");
 }
 
@@ -94,8 +93,8 @@ void update(void) {
 
 	// Rotate the cube
 	mesh.rotation.x += 0.01;
-	// mesh.rotation.y += 0.01;
-	// mesh.rotation.z += 0.01;
+	mesh.rotation.y += 0.01;
+	mesh.rotation.z += 0.01;
 
 	// Load all triangles to render
 	int num_mesh_faces = array_length(mesh.faces);
@@ -108,14 +107,13 @@ void update(void) {
 		face_vertices[1] = mesh.vertices[face.b-1];
 		face_vertices[2] = mesh.vertices[face.c-1];
 
-		triangle_t projected_triangle;
-		// Project all vertices of current triangle
-		for(int j=0; j<3; j++)
+		// Rotate and Transform the vertices
+		vec3_t transformed_vertices[3];
+		for(int i=0; i<3; i++)
 		{
-			vec3_t vertex = face_vertices[j];
+			vec3_t transformed_vertex = face_vertices[i];
 
-			// Rotate the vertices
-			vec3_t transformed_vertex = vertex;
+			// Rotate the face
 			transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
 			transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
 			transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
@@ -125,13 +123,33 @@ void update(void) {
 			transformed_vertex.y -= camera_pos.y;
 			transformed_vertex.z -= camera_pos.z;
 
+			transformed_vertices[i] = transformed_vertex;
+		}
+
+		// backface_culling 
+		vec3_t camera_ray = vec3_sub(camera_pos, transformed_vertices[0]);
+		vec3_t normal = vec3_cross(
+			vec3_sub(transformed_vertices[1], transformed_vertices[0]), 
+			vec3_sub(transformed_vertices[2], transformed_vertices[0])
+		);
+		vec3_normalize(&normal);
+		if(vec3_dot(camera_ray, normal) < 0)
+			continue;
+
+		// Project all vertices of current triangle
+		triangle_t projected_triangle;
+		for(int j=0; j<3; j++)
+		{
+			vec3_t vertex = transformed_vertices[j];
+
 			// Project and translate
-			projected_triangle.vertices[j] = project(transformed_vertex);
+			projected_triangle.vertices[j] = project(vertex);			 // Main call in this for loop 
+
+			// Translate vertex to middle of the screen
 			projected_triangle.vertices[j].x += window_width/2;
 			projected_triangle.vertices[j].y += window_height/2;
 		}
 
-		// triangles_to_render[i] = projected_triangle;
 		array_push(triangles_to_render, projected_triangle);
 	}
 }
@@ -183,8 +201,4 @@ int main(void) {
 	free_resources();
 	return 0;
 }
-
-
-
-
 
