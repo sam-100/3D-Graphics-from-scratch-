@@ -25,8 +25,8 @@ void setup(void) {
 	);
 
 	// Load the cube in our mesh data structure 
-	load_cube_mesh_data();
-	// load_obj_file_data("./assets/cube.obj");
+	// load_cube_mesh_data();
+	load_obj_file_data("./assets/f22.obj");
 
 }
 
@@ -76,6 +76,16 @@ void process_input(void) {
 			cull_method = CULL_NONE;
 			break;
 		}
+		if( event.key.keysym.sym == SDLK_SPACE )
+		{
+			rotate = !rotate;
+			break;
+		}
+		if( event.key.keysym.sym == SDLK_p )
+		{
+			painter = !painter;
+			break;
+		}
 		break;
 	case SDL_MOUSEBUTTONDOWN:
 		printf("Mouse click down at <%d, %d>\n", event.button.x, event.button.y);
@@ -103,9 +113,12 @@ void update(void) {
 	triangles_to_render = NULL;
 
 	// Rotate the cube
-	mesh.rotation.x += 0.01;
-	mesh.rotation.y += 0.01;
-	mesh.rotation.z += 0.01;
+	if(rotate)
+	{
+		mesh.rotation.x += 0.01;
+		mesh.rotation.y += 0.01;
+		mesh.rotation.z += 0.01;
+	}
 
 	// Load all triangles to render
 	int num_mesh_faces = array_length(mesh.faces);
@@ -178,6 +191,8 @@ void update(void) {
 	}
 
 	// Sort all triangles to render in dsc order of their avg_depth
+	if(!painter)
+		return;
 	int num_triangles = array_length(triangles_to_render);
 	for(int i=0; i<num_triangles; i++)
 		for(int j=0; j<num_triangles-i-1; j++)
@@ -204,26 +219,26 @@ void render(void) {
 	for(int i=0; i<num_triangles; i++)
 	{
 		triangle_t triangle = triangles_to_render[i];
-		switch(render_method)
-		{
-		case RENDER_WIRE_VERTEX:
-			draw_triangle(triangle, 0xffffffff);
-			for(int j=0; j<3; j++)
-				draw_rect(triangle.vertices[j].x, triangle.vertices[j].y, 5, 5, 0xffff00ff);
-			break;
-		case RENDER_WIRE:
-			draw_triangle(triangle, 0xffffffff);
-			break;
-		case RENDER_FILL_TRIANGLE:
-			draw_filled_triangle(triangle, triangle.color);
-			break;
-		case RENDER_FILL_TRIANGLE_WIRE:
-			draw_filled_triangle(triangle, triangle.color);
-			draw_triangle(triangle, 0xffffffff);
-			break;
-		}
-		// draw_filled_triangle(triangle, 0xffffff00);
-		// draw_triangle(triangle, 0x00000000);
+		// switch(render_method)
+		// {
+		// case RENDER_WIRE_VERTEX:
+		// 	draw_triangle(triangle, 0xffffffff);
+		// 	for(int j=0; j<3; j++)
+		// 		draw_rect(triangle.vertices[j].x, triangle.vertices[j].y, 5, 5, 0xffff00ff);
+		// 	break;
+		// case RENDER_WIRE:
+		// 	draw_triangle(triangle, 0xffffffff);
+		// 	break;
+		// case RENDER_FILL_TRIANGLE:
+		// 	draw_filled_triangle(triangle, triangle.color);
+		// 	break;
+		// case RENDER_FILL_TRIANGLE_WIRE:
+		// 	draw_filled_triangle(triangle, triangle.color);
+		// 	draw_triangle(triangle, 0xffffffff);
+		// 	break;
+		// }
+		draw_filled_triangle(triangle, 0xffaaaa00);
+		draw_triangle(triangle, 0x00000000);
 	}
 
 	// Deallocate the triangle array

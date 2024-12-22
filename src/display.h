@@ -30,6 +30,9 @@ enum render_method {
     RENDER_FILL_TRIANGLE_WIRE
 } render_method;
 
+extern bool rotate;
+extern bool painter;
+
 
 bool initialize_window(void);
 void destroy_window(void);

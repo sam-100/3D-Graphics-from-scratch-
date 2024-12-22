@@ -10,6 +10,9 @@ int window_height = 800;
 int rect_x = 200, rect_y = 100;
 int rect_width = 100, rect_height = 100;
 
+bool rotate = true;
+bool painter = true;
+
 bool initialize_window(void) {
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
