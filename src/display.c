@@ -13,6 +13,9 @@ int rect_width = 100, rect_height = 100;
 bool rotate = true;
 bool painter = true;
 
+enum cull_method cull_method;
+enum render_method render_method;
+
 bool initialize_window(void) {
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{

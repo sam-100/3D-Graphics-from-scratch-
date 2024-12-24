@@ -219,26 +219,26 @@ void render(void) {
 	for(int i=0; i<num_triangles; i++)
 	{
 		triangle_t triangle = triangles_to_render[i];
-		// switch(render_method)
-		// {
-		// case RENDER_WIRE_VERTEX:
-		// 	draw_triangle(triangle, 0xffffffff);
-		// 	for(int j=0; j<3; j++)
-		// 		draw_rect(triangle.vertices[j].x, triangle.vertices[j].y, 5, 5, 0xffff00ff);
-		// 	break;
-		// case RENDER_WIRE:
-		// 	draw_triangle(triangle, 0xffffffff);
-		// 	break;
-		// case RENDER_FILL_TRIANGLE:
-		// 	draw_filled_triangle(triangle, triangle.color);
-		// 	break;
-		// case RENDER_FILL_TRIANGLE_WIRE:
-		// 	draw_filled_triangle(triangle, triangle.color);
-		// 	draw_triangle(triangle, 0xffffffff);
-		// 	break;
-		// }
-		draw_filled_triangle(triangle, 0xffaaaa00);
-		draw_triangle(triangle, 0x00000000);
+		switch(render_method)
+		{
+		case RENDER_WIRE_VERTEX:
+			draw_triangle(triangle, 0xffff0000);
+			for(int j=0; j<3; j++)
+				draw_rect(triangle.vertices[j].x, triangle.vertices[j].y, 5, 5, 0xffff00ff);
+			break;
+		case RENDER_WIRE:
+			draw_triangle(triangle, 0xffff0000);
+			break;
+		case RENDER_FILL_TRIANGLE:
+			draw_filled_triangle(triangle, 0xffaaaa00);
+			break;
+		case RENDER_FILL_TRIANGLE_WIRE:
+			draw_filled_triangle(triangle, 0xffaaaa00);
+			draw_triangle(triangle, 0xffff0000);
+			break;
+		}
+		// draw_filled_triangle(triangle, 0xffaaaa00);
+		// draw_triangle(triangle, 0x00000000);
 	}
 
 	// Deallocate the triangle array

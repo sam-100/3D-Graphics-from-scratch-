@@ -48,6 +48,8 @@ face_t cube_faces[N_CUBE_FACES] = {
     {.a = 1, .b = 6, .c = 8, .color = 0xffff00ff}, 
 };
 
+mesh_t mesh;
+
 void load_cube_mesh_data(void) {
     // load all cube vertices to mesh
     for(int i=0; i<N_CUBE_VERTICES; i++)

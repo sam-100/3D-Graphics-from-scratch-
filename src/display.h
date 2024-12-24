@@ -21,14 +21,16 @@ extern int window_height;
 enum cull_method {
     CULL_NONE, 
     CULL_BACKFACE
-} cull_method;
+};
+extern enum cull_method cull_method;
 
 enum render_method {
     RENDER_WIRE, 
     RENDER_WIRE_VERTEX, 
     RENDER_FILL_TRIANGLE, 
     RENDER_FILL_TRIANGLE_WIRE
-} render_method;
+};
+extern enum render_method render_method;
 
 extern bool rotate;
 extern bool painter;
