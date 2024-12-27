@@ -1,16 +1,20 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
+#include <math.h>
 #include "display.h"
 #include "vector.h"
 #include "mesh.h"
 #include "array.h"
+#include "matrix.h"
+
+#define PI 3.14
 
 bool is_running = false;
 
-int fov_factor = 640;
 vec3_t camera_pos = {0, 0, 0};
 uint32_t previous_time = 0;
+mat4_t proj_matrix;
 
 triangle_t *triangles_to_render = NULL;
 
@@ -24,9 +28,15 @@ void setup(void) {
 		window_height
 	);
 
+	float fov = PI/3.0;
+	float aspect = (float)window_height/(float)window_width;
+	float znear = 0.1;
+	float zfar = 100.0;
+	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
+
 	// Load the cube in our mesh data structure 
 	// load_cube_mesh_data();
-	load_obj_file_data("./assets/f22.obj");
+	load_obj_file_data("./assets/cube.obj");
 
 }
 
@@ -78,7 +88,7 @@ void process_input(void) {
 		}
 		if( event.key.keysym.sym == SDLK_SPACE )
 		{
-			rotate = !rotate;
+			transform = !transform;
 			break;
 		}
 		if( event.key.keysym.sym == SDLK_p )
@@ -97,12 +107,6 @@ void process_input(void) {
 	}
 }
 
-vec2_t project(vec3_t point) {
-	// vec2_t projected_point = {point.x*fov_factor, point.y*fov_factor};
-    vec2_t projected_point = {point.x*fov_factor/point.z, point.y*fov_factor/point.z};
-    return projected_point;
-}
-
 void update(void) {
 	// wait for current frame time to expire
 	if(!SDL_TICKS_PASSED(SDL_GetTicks(), previous_time+FRAME_TARGET_TIME))
@@ -112,13 +116,29 @@ void update(void) {
 	// Initialize the triangle array to NULL
 	triangles_to_render = NULL;
 
-	// Rotate the cube
-	if(rotate)
+	// Update Scale, Rotation, and Translation Values per frame.
+	if(transform)
 	{
 		mesh.rotation.x += 0.01;
-		mesh.rotation.y += 0.01;
-		mesh.rotation.z += 0.01;
+		// mesh.rotation.y += 0.01;
+		// mesh.rotation.z += 0.01;
+
+		// mesh.scale.x += 0.002;
+		// mesh.scale.y += 0.002;
+
+		// mesh.translation.x += 0.01;
+		mesh.translation.z = 5;
 	}
+	
+
+
+	// Create a scale matrix, rotation, translation, and projection matrices used to multiply mesh vertices
+	mat4_t scale_matrix = mat4_make_scaled(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+	mat4_t translation_matrix = mat4_make_translation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
+	mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
+	mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
+	mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+
 
 	// Load all triangles to render
 	int num_mesh_faces = array_length(mesh.faces);
@@ -131,30 +151,36 @@ void update(void) {
 		face_vertices[1] = mesh.vertices[face.b-1];
 		face_vertices[2] = mesh.vertices[face.c-1];
 
-		// Rotate and Transform the vertices
-		vec3_t transformed_vertices[3];
-		for(int i=0; i<3; i++)
+		// Apply the transformatiosn for each vertex of the face
+		vec4_t transformed_vertices[3];
+		for(int j=0; j<3; j++)
 		{
-			vec3_t transformed_vertex = face_vertices[i];
+			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-			// Rotate the face
-			transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
-			transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
-			transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
+            // Create a World matrix
+            mat4_t world_matrix = mat4_make_identity();
+            world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+            world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
+            world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
+            world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
+            world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
 
-			// Translate the vertex away from camera
-			transformed_vertex.z += 5;
+            // Apply transformations to the mesh
+            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);            
 
-			transformed_vertices[i] = transformed_vertex;
+			// Save the transformed vertex
+			transformed_vertices[j] = transformed_vertex;
 		}
+
+		
 
 		// backface_culling 
 		if(cull_method == CULL_BACKFACE)
 		{
-			vec3_t camera_ray = vec3_sub(camera_pos, transformed_vertices[0]);
+			vec3_t camera_ray = vec3_sub(camera_pos, vec3_from_vec4(transformed_vertices[0]));
 			vec3_t normal = vec3_cross(
-				vec3_sub(transformed_vertices[1], transformed_vertices[0]), 
-				vec3_sub(transformed_vertices[2], transformed_vertices[0])
+				vec3_sub(vec3_from_vec4(transformed_vertices[1]), vec3_from_vec4(transformed_vertices[0])), 
+				vec3_sub(vec3_from_vec4(transformed_vertices[2]), vec3_from_vec4(transformed_vertices[0]))
 			);
 			vec3_normalize(&camera_ray);
 			vec3_normalize(&normal);
@@ -166,11 +192,15 @@ void update(void) {
 		float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z)/3;
 
 		// Project all vertices of current triangle
-		vec2_t projected_vertices[3];
+		vec4_t projected_vertices[3];
 		for(int j=0; j<3; j++)
 		{
 			// Project and translate
-			projected_vertices[j] = project(transformed_vertices[j]);			 // Main call in this for loop 
+			projected_vertices[j] = mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]); 	// Main call in this for loop 
+
+			// Scale into the view
+			projected_vertices[j].x *= window_width/2.0;
+			projected_vertices[j].y *= window_height/2.0; 
 
 			// Translate vertex to middle of the screen
 			projected_vertices[j].x += window_width/2;
@@ -178,7 +208,7 @@ void update(void) {
 		}
 
 		// Push projected triangle to triangles_to_render array
-		triangle_t projected_triangle = {
+		triangle_t projected_triangle = { 
 			.vertices = {
 				{projected_vertices[0].x, projected_vertices[0].y}, 
 				{projected_vertices[1].x, projected_vertices[1].y}, 

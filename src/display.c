@@ -10,11 +10,11 @@ int window_height = 800;
 int rect_x = 200, rect_y = 100;
 int rect_width = 100, rect_height = 100;
 
-bool rotate = true;
+bool transform = true;
 bool painter = true;
 
-enum cull_method cull_method;
-enum render_method render_method;
+enum cull_method cull_method = CULL_BACKFACE;
+enum render_method render_method = RENDER_WIRE_VERTEX;
 
 bool initialize_window(void) {
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
@@ -26,8 +26,8 @@ bool initialize_window(void) {
 	// Query SDL to get the display size
 	SDL_DisplayMode display_mode;
 	SDL_GetDisplayMode(0, 0, &display_mode);
-	// window_width = display_mode.w;
-	// window_height = display_mode.h;
+	window_width = display_mode.w;
+	window_height = display_mode.h;
 
 	// Create SDL window
 	window = SDL_CreateWindow("Hello Window!", 
@@ -51,7 +51,7 @@ bool initialize_window(void) {
 		return false;
 	}
 
-	// SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+	SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
 
 	return true;
 }

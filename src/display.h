@@ -32,7 +32,7 @@ enum render_method {
 };
 extern enum render_method render_method;
 
-extern bool rotate;
+extern bool transform;
 extern bool painter;
 
 

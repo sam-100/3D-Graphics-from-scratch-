@@ -48,7 +48,13 @@ face_t cube_faces[N_CUBE_FACES] = {
     {.a = 1, .b = 6, .c = 8, .color = 0xffff00ff}, 
 };
 
-mesh_t mesh;
+mesh_t mesh = {
+    .vertices = NULL, 
+    .faces = NULL, 
+    .scale = {1.0, 1.0, 1.0}, 
+    .rotation = {0.0, 0.0, 0.0}, 
+    .translation = {0.0, 0.0, 0.0}
+};
 
 void load_cube_mesh_data(void) {
     // load all cube vertices to mesh
@@ -179,6 +185,7 @@ void load_obj_file_data(char *filename) {
     // Set the rotation
     vec3_t angle = {3.5, 0, 0}; // {0.2, 0.1, 0.3};
     mesh.rotation = angle;
+    mesh.scale.x = mesh.scale.y = mesh.scale.z = 1;
 }
 
 void print_mesh(void) {
