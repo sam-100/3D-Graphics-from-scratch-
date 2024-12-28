@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-#include "vector.h"
 #include "triangle.h"
 
 #define FPS 30
@@ -27,9 +26,11 @@ extern enum cull_method cull_method;
 enum render_method {
     RENDER_WIRE, 
     RENDER_WIRE_VERTEX, 
-    RENDER_FILL_TRIANGLE, 
     RENDER_FILL_TRIANGLE_WIRE, 
-    RENDER_WIRE_NORMALS
+    RENDER_FILL_TRIANGLE, 
+    RENDER_FILL_TRIANGLE_FLAT, 
+    RENDER_FILL_TRIANGLE_NORMAL, 
+    RENDER_FILL_TRIANGLE_GOROUD
 };
 extern enum render_method render_method;
 
@@ -46,5 +47,6 @@ void draw_pixel(int x, int y, uint32_t color);
 void draw_rect(int x, int y, int width, int height, uint32_t color);
 void draw_line(vec2_t a, vec2_t b, uint32_t color);
 void draw_triangle(triangle_t triangle, uint32_t color);
+void draw_normals(triangle_t triangle, uint32_t color);
 
 #endif
