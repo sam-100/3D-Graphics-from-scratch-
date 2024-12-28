@@ -26,10 +26,10 @@ mat4_t mat4_make_identity(void) {
 }
 
 mat4_t mat4_make_scaled(float sz_x, float sz_y, float sz_z) {
-    // | 1 0 0 0 |
-    // | 0 1 0 0 |
-    // | 0 0 1 0 |
-    // | 0 0 0 1 |
+    // | szx 0   0   0 |
+    // | 0   szy 0   0 |
+    // | 0   0   szz 0 |
+    // | 0   0   0   1 |
     mat4_t matrix = {
         .m[0] = {sz_x, 0, 0, 0}, 
         .m[1] = {0, sz_y, 0, 0}, 

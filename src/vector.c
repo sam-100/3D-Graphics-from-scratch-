@@ -117,6 +117,15 @@ void vec3_normalize(vec3_t *v) {
     v->z /= length;
 }
 
+vec3_t vec3_negative(vec3_t v) {
+    vec3_t result = {
+        .x = -v.x, 
+        .y = -v.y, 
+        .z = -v.z
+    };
+    return result;
+}
+
 vec3_t vec3_rotate_x(vec3_t v, float theta) {
     vec3_t rotated_vector = {
         .x = v.x, 

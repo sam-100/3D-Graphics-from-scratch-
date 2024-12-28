@@ -52,8 +52,8 @@ mesh_t mesh = {
     .vertices = NULL, 
     .faces = NULL, 
     .scale = {1.0, 1.0, 1.0}, 
-    .rotation = {0.0, 0.0, 0.0}, 
-    .translation = {0.0, 0.0, 0.0}
+    .rotation = {0, 0, 0}, 
+    .translation = {0.0, -1.0, 5.0}
 };
 
 void load_cube_mesh_data(void) {
@@ -73,20 +73,19 @@ void load_cube_mesh_data(void) {
 }
 
 char *readLine(int fd) {    
-    char *line = malloc(100);
+    char *line = NULL;
     char str[1];
-    int i=0;
     int eof = 1;
     while(read(fd, str, 1) != 0)
     {
         eof = 0;
         if(str[0] == '\n')
             break;
-        line[i++] = str[0];
+        array_push(line, str[0]);
     }
     if(eof)
         return NULL;
-    line[i] = '\0';
+    array_push(line, '\0');
     return line;
 }
 
@@ -111,7 +110,6 @@ char **tokenize(char *line, char delimiter, int size) {
     // Push str to tokens array
     array_push(str, '\0');
     array_push(tokens, str);
-
     return tokens;
 }
 
@@ -137,6 +135,7 @@ void load_obj_file_data(char *filename) {
             // 2.2.1. if first token is 'v', then read and push vertices
             // 2.2.2. if first token is 'f', then read and push faces
         char **tokens = tokenize(line, ' ', strlen(line));
+        
         if(strcmp(tokens[0], "v") == 0)
         {
             // TODO: Push the vertex to mesh.vertices
@@ -145,47 +144,57 @@ void load_obj_file_data(char *filename) {
             vertex.y = atof(tokens[2]);
             vertex.z = atof(tokens[3]);
             
-            array_push(mesh.vertices, vertex);            
+            array_push(mesh.vertices, vertex);   
+            array_free(tokens);
+            array_free(line);
             continue;
         }
         if(strcmp(tokens[0], "f") == 0)
         {
             // TODO: Push the face to mesh.faces
-            int vertex_indices[3], texture_indices[3], normal_indices[3];
+            int vertex_indices[4], texture_indices[4], normal_indices[4];
             
-            for(int i=1; i<=3; i++)
+            for(int i=1; i<=array_length(tokens)-1; i++)
             {
-                vertex_indices[i-1] = atoi(tokenize(tokens[i], '/', strlen(tokens[i]))[0]);
-                texture_indices[i-1] =atoi( tokenize(tokens[i], '/', strlen(tokens[i]))[1]);
-                normal_indices[i-1] = atoi(tokenize(tokens[i], '/', strlen(tokens[i]))[2]);
+                char **sub_tokens = tokenize(tokens[i], '/', strlen(tokens[i]));
+                vertex_indices[i-1] = atoi(sub_tokens[0]);
+                // texture_indices[i-1] = atoi( tokenize(tokens[i], '/', strlen(tokens[i]))[1]);
+                // normal_indices[i-1] = atoi(tokenize(tokens[i], '/', strlen(tokens[i]))[2]);
+                array_free(sub_tokens);
             }
 
             face_t face;
             face.a = vertex_indices[0];
             face.b = vertex_indices[1];
             face.c = vertex_indices[2];
+            face.color = 0xffffffff;
 
             array_push(mesh.faces, face);
-            continue;
 
-            // // TODO: Push the face to mesh.faces
-            // face_t face;
-            // face.a = atoi(tokenize(tokens[1], '/', strlen(tokens[1]))[0]);
-            // face.b = atoi(tokenize(tokens[2], '/', strlen(tokens[2]))[0]);
-            // face.c = atoi(tokenize(tokens[3], '/', strlen(tokens[3]))[0]);
-        
-            // array_push(mesh.faces, face);
-            // continue;
+            if(array_length(tokens) < 5)
+            {
+                array_free(tokens);
+                array_free(line);
+                continue;
+            }
+            
+            face.a = vertex_indices[0];
+            face.b = vertex_indices[2];
+            face.c = vertex_indices[3];
+            face.color = 0xffffffff;
+
+            array_push(mesh.faces, face);
+            array_free(tokens);
+            array_free(line);
+            continue;
         }
+
+        array_free(tokens);
+        array_free(line);
     }
     
     // 3. Close the file
     close(fd);
-
-    // Set the rotation
-    vec3_t angle = {3.5, 0, 0}; // {0.2, 0.1, 0.3};
-    mesh.rotation = angle;
-    mesh.scale.x = mesh.scale.y = mesh.scale.z = 1;
 }
 
 void print_mesh(void) {

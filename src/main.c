@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <SDL2/SDL.h>
@@ -7,6 +8,7 @@
 #include "mesh.h"
 #include "array.h"
 #include "matrix.h"
+#include "light.h"
 
 #define PI 3.14
 
@@ -36,8 +38,9 @@ void setup(void) {
 
 	// Load the cube in our mesh data structure 
 	// load_cube_mesh_data();
-	load_obj_file_data("./assets/cube.obj");
-
+	load_obj_file_data("./assets/f22.obj");
+	print_mesh();
+	// exit(100);
 }
 
 // processes all inputs
@@ -119,15 +122,13 @@ void update(void) {
 	// Update Scale, Rotation, and Translation Values per frame.
 	if(transform)
 	{
-		mesh.rotation.x += 0.01;
-		// mesh.rotation.y += 0.01;
-		// mesh.rotation.z += 0.01;
+		// mesh.rotation.x += 0.02;
+		mesh.rotation.y += 0.02;
+		// mesh.rotation.z += 0.02;
 
 		// mesh.scale.x += 0.002;
 		// mesh.scale.y += 0.002;
 
-		// mesh.translation.x += 0.01;
-		mesh.translation.z = 5;
 	}
 	
 
@@ -173,23 +174,30 @@ void update(void) {
 		}
 
 		
-
 		// backface_culling 
+		vec3_t normal, camera_ray;
+		camera_ray = vec3_sub(camera_pos, vec3_from_vec4(transformed_vertices[0]));
+		normal = vec3_cross(
+			vec3_sub(vec3_from_vec4(transformed_vertices[1]), vec3_from_vec4(transformed_vertices[0])), 
+			vec3_sub(vec3_from_vec4(transformed_vertices[2]), vec3_from_vec4(transformed_vertices[0]))
+		);
+		vec3_normalize(&camera_ray);
+		vec3_normalize(&normal);
 		if(cull_method == CULL_BACKFACE)
 		{
-			vec3_t camera_ray = vec3_sub(camera_pos, vec3_from_vec4(transformed_vertices[0]));
-			vec3_t normal = vec3_cross(
-				vec3_sub(vec3_from_vec4(transformed_vertices[1]), vec3_from_vec4(transformed_vertices[0])), 
-				vec3_sub(vec3_from_vec4(transformed_vertices[2]), vec3_from_vec4(transformed_vertices[0]))
-			);
-			vec3_normalize(&camera_ray);
-			vec3_normalize(&normal);
 			if(vec3_dot(camera_ray, normal) < 0)
 				continue;
 		}
 
 		// Find the avg_depth of face
 		float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z)/3;
+
+
+		// Find intensity of this face
+		float cos_theta = -vec3_dot(normal, light.direction) / ( vec3_length(light.direction) * vec3_length(normal));
+		float intensity = cos_theta > 0.4 ? cos_theta : 0.4;
+
+
 
 		// Project all vertices of current triangle
 		vec4_t projected_vertices[3];
@@ -201,6 +209,9 @@ void update(void) {
 			// Scale into the view
 			projected_vertices[j].x *= window_width/2.0;
 			projected_vertices[j].y *= window_height/2.0; 
+
+			// Inverting the y coordinates
+			projected_vertices[j].y *= -1;
 
 			// Translate vertex to middle of the screen
 			projected_vertices[j].x += window_width/2;
@@ -214,8 +225,9 @@ void update(void) {
 				{projected_vertices[1].x, projected_vertices[1].y}, 
 				{projected_vertices[2].x, projected_vertices[2].y}
 			}, 
-			.color = face.color, 
-			.avg_depth = avg_depth
+			.color = light_apply_intensity(face.color, intensity), 
+			.avg_depth = avg_depth, 
+			// .intensity = intensity
 		};
 		array_push(triangles_to_render, projected_triangle);
 	}
@@ -260,10 +272,10 @@ void render(void) {
 			draw_triangle(triangle, 0xffff0000);
 			break;
 		case RENDER_FILL_TRIANGLE:
-			draw_filled_triangle(triangle, 0xffaaaa00);
+			draw_filled_triangle(triangle, triangle.color);
 			break;
 		case RENDER_FILL_TRIANGLE_WIRE:
-			draw_filled_triangle(triangle, 0xffaaaa00);
+			draw_filled_triangle(triangle, triangle.color);
 			draw_triangle(triangle, 0xffff0000);
 			break;
 		}
