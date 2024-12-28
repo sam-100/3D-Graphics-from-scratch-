@@ -51,6 +51,7 @@ face_t cube_faces[N_CUBE_FACES] = {
 mesh_t mesh = {
     .vertices = NULL, 
     .faces = NULL, 
+    .normals = NULL, 
     .scale = {1.0, 1.0, 1.0}, 
     .rotation = {0, 0, 0}, 
     .translation = {0.0, -1.0, 5.0}
@@ -131,11 +132,8 @@ void load_obj_file_data(char *filename) {
         if(line == NULL)
             break;
 
-        // 2.2. Tokenize the line
-            // 2.2.1. if first token is 'v', then read and push vertices
-            // 2.2.2. if first token is 'f', then read and push faces
+        // 2.2. Tokenize the line and process each token
         char **tokens = tokenize(line, ' ', strlen(line));
-        
         if(strcmp(tokens[0], "v") == 0)
         {
             // TODO: Push the vertex to mesh.vertices
@@ -145,6 +143,19 @@ void load_obj_file_data(char *filename) {
             vertex.z = atof(tokens[3]);
             
             array_push(mesh.vertices, vertex);   
+            array_free(tokens);
+            array_free(line);
+            continue;
+        }
+        if(strcmp(tokens[0], "vn") == 0)
+        {
+            // TODO: Push the vertex to mesh.vertices
+            vec3_t normal;
+            normal.x = atof(tokens[1]);
+            normal.y = atof(tokens[2]);
+            normal.z = atof(tokens[3]);
+            
+            array_push(mesh.normals, normal);   
             array_free(tokens);
             array_free(line);
             continue;

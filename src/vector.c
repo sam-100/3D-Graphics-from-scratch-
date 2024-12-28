@@ -42,10 +42,13 @@ vec2_t vec2_div(vec2_t v, float factor) {
     return result;
 }
 
-void vec2_normalize(vec2_t *v) {
-    float length = vec2_length(*v);
-    v->x /= length;
-    v->y /= length;
+vec2_t vec2_normalize(vec2_t v) {
+    float length = vec2_length(v);
+    vec2_t result = {
+        .x = v.x / length, 
+        .y = v.y / length, 
+    };
+    return result;
 }
 
 float vec2_dot(vec2_t a, vec2_t b) {
@@ -110,11 +113,14 @@ float vec3_dot(vec3_t a, vec3_t b) {
     return a.x*b.x + a.y*b.y + a.z*b.z;
 }
 
-void vec3_normalize(vec3_t *v) {
-    float length = vec3_length(*v);
-    v->x /= length;
-    v->y /= length;
-    v->z /= length;
+vec3_t vec3_normalize(vec3_t v) {
+    float length = vec3_length(v);
+    vec3_t result = {
+        .x = v.x / length, 
+        .y = v.y / length, 
+        .z = v.z / length
+    };
+    return result;
 }
 
 vec3_t vec3_negative(vec3_t v) {

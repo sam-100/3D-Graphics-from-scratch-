@@ -181,8 +181,8 @@ void update(void) {
 			vec3_sub(vec3_from_vec4(transformed_vertices[1]), vec3_from_vec4(transformed_vertices[0])), 
 			vec3_sub(vec3_from_vec4(transformed_vertices[2]), vec3_from_vec4(transformed_vertices[0]))
 		);
-		vec3_normalize(&camera_ray);
-		vec3_normalize(&normal);
+		camera_ray = vec3_normalize(camera_ray);
+		normal = vec3_normalize(normal);
 		if(cull_method == CULL_BACKFACE)
 		{
 			if(vec3_dot(camera_ray, normal) < 0)
@@ -273,10 +273,16 @@ void render(void) {
 			break;
 		case RENDER_FILL_TRIANGLE:
 			draw_filled_triangle(triangle, triangle.color);
+			// draw_filled_triangle_goroud(triangle, triangle.color);
 			break;
 		case RENDER_FILL_TRIANGLE_WIRE:
 			draw_filled_triangle(triangle, triangle.color);
+			// draw_filled_triangle_goroud(triangle, triangle.color);
 			draw_triangle(triangle, 0xffff0000);
+			break;
+		case RENDER_WIRE_NORMALS:
+			draw_triangle(triangle, 0xffff0000);
+			// TODO: draw normals
 			break;
 		}
 		// draw_filled_triangle(triangle, 0xffaaaa00);

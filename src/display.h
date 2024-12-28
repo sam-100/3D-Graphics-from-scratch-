@@ -28,7 +28,8 @@ enum render_method {
     RENDER_WIRE, 
     RENDER_WIRE_VERTEX, 
     RENDER_FILL_TRIANGLE, 
-    RENDER_FILL_TRIANGLE_WIRE
+    RENDER_FILL_TRIANGLE_WIRE, 
+    RENDER_WIRE_NORMALS
 };
 extern enum render_method render_method;
 
