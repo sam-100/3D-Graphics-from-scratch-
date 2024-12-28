@@ -49,11 +49,7 @@ void draw_pixel(int x, int y, uint32_t color);
 void draw_rect(int x, int y, int width, int height, uint32_t color);
 void draw_line(vec2_t a, vec2_t b, uint32_t color);
 void draw_triangle(triangle_t triangle, uint32_t color);
-<<<<<<< HEAD
 void draw_normals(triangle_t triangle, vec2_t *normals, uint32_t color);
 vec4_t project_point_to_screen(mat4_t proj_matrix, vec4_t point);
-=======
-void draw_normals(triangle_t triangle, uint32_t color);
->>>>>>> refs/remotes/origin/Gorould
 
 #endif

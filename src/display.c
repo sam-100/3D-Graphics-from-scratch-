@@ -130,7 +130,6 @@ void draw_triangle(triangle_t triangle, uint32_t color) {
 	draw_line(triangle.vertices[2], triangle.vertices[0], color);
 }
 
-<<<<<<< HEAD
 
 vec4_t project_point_to_screen(mat4_t proj_matrix, vec4_t point) {
 	// Project and translate
@@ -153,8 +152,4 @@ vec4_t project_point_to_screen(mat4_t proj_matrix, vec4_t point) {
 void draw_normals(triangle_t triangle, vec2_t *normals, uint32_t color) {
 	for(int i=0; i<3; i++)
 		draw_line(triangle.vertices[i], normals[i], color);
-=======
-void draw_normals(triangle_t triangle, uint32_t color) {
-	// 
->>>>>>> refs/remotes/origin/Gorould
 }
