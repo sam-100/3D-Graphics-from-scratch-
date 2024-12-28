@@ -14,7 +14,7 @@ bool transform = true;
 bool painter = true;
 
 enum cull_method cull_method = CULL_BACKFACE;
-enum render_method render_method = RENDER_WIRE_VERTEX;
+enum render_method render_method = RENDER_WIRE;
 
 bool initialize_window(void) {
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0)
@@ -124,10 +124,32 @@ void draw_line(vec2_t a, vec2_t b, uint32_t color) {
     }
 }
 
-
-
 void draw_triangle(triangle_t triangle, uint32_t color) {
 	draw_line(triangle.vertices[0], triangle.vertices[1], color);
 	draw_line(triangle.vertices[1], triangle.vertices[2], color);
 	draw_line(triangle.vertices[2], triangle.vertices[0], color);
+}
+
+
+vec4_t project_point_to_screen(mat4_t proj_matrix, vec4_t point) {
+	// Project and translate
+	vec4_t projected_point;
+	projected_point = mat4_mul_vec4_project(proj_matrix, point); 	// Main call in this for loop 
+
+	// Scale into the view
+	projected_point.x *= window_width/2.0;
+	projected_point.y *= window_height/2.0; 
+
+	// Inverting the y coordinates
+	projected_point.y *= -1;
+
+	// Translate vertex to middle of the screen
+	projected_point.x += window_width/2;
+	projected_point.y += window_height/2;
+	return projected_point;
+}
+
+void draw_normals(triangle_t triangle, vec2_t *normals, uint32_t color) {
+	for(int i=0; i<3; i++)
+		draw_line(triangle.vertices[i], normals[i], color);
 }

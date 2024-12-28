@@ -170,7 +170,7 @@ void load_obj_file_data(char *filename) {
                 char **sub_tokens = tokenize(tokens[i], '/', strlen(tokens[i]));
                 vertex_indices[i-1] = atoi(sub_tokens[0]);
                 // texture_indices[i-1] = atoi( tokenize(tokens[i], '/', strlen(tokens[i]))[1]);
-                // normal_indices[i-1] = atoi(tokenize(tokens[i], '/', strlen(tokens[i]))[2]);
+                normal_indices[i-1] = atoi(tokenize(tokens[i], '/', strlen(tokens[i]))[2]);
                 array_free(sub_tokens);
             }
 
@@ -178,9 +178,13 @@ void load_obj_file_data(char *filename) {
             face.a = vertex_indices[0];
             face.b = vertex_indices[1];
             face.c = vertex_indices[2];
+            face.normal_a = normal_indices[0];
+            face.normal_b = normal_indices[1];
+            face.normal_c = normal_indices[2];
             face.color = 0xffffffff;
 
             array_push(mesh.faces, face);
+            continue;
 
             if(array_length(tokens) < 5)
             {

@@ -4,11 +4,11 @@
 #include <SDL2/SDL.h>
 #include <math.h>
 #include "display.h"
-#include "vector.h"
 #include "mesh.h"
 #include "array.h"
 #include "matrix.h"
 #include "light.h"
+
 
 #define PI 3.14
 
@@ -19,6 +19,7 @@ uint32_t previous_time = 0;
 mat4_t proj_matrix;
 
 triangle_t *triangles_to_render = NULL;
+vec2_t **normals_to_render = NULL;
 
 void setup(void) {
 	color_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height);
@@ -39,7 +40,7 @@ void setup(void) {
 	// Load the cube in our mesh data structure 
 	// load_cube_mesh_data();
 	load_obj_file_data("./assets/f22.obj");
-	print_mesh();
+	// print_mesh();
 	// exit(100);
 }
 
@@ -54,50 +55,50 @@ void process_input(void) {
 		is_running = false;
 		break;
 	case SDL_KEYDOWN:
-		if( event.key.keysym.sym == SDLK_ESCAPE )
+		switch (event.key.keysym.sym)
 		{
-			is_running = false;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_1 )
-		{
-			render_method = RENDER_WIRE_VERTEX;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_2 )
-		{
-			render_method = RENDER_WIRE;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_3 )
-		{
-			render_method = RENDER_FILL_TRIANGLE;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_4 )
-		{
-			render_method = RENDER_FILL_TRIANGLE_WIRE;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_c )
-		{
-			cull_method = CULL_BACKFACE;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_d )
-		{
-			cull_method = CULL_NONE;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_SPACE )
-		{
-			transform = !transform;
-			break;
-		}
-		if( event.key.keysym.sym == SDLK_p )
-		{
-			painter = !painter;
-			break;
+			case SDLK_ESCAPE:
+				is_running = false;
+				break;
+
+			// Render method
+			case SDLK_1:
+				render_method = RENDER_WIRE;
+				break;
+			case SDLK_2:
+				render_method = RENDER_WIRE_VERTEX;
+				break;
+			case SDLK_3:
+				render_method = RENDER_FILL_TRIANGLE_WIRE;
+				break;
+			case SDLK_4:
+				render_method = RENDER_FILL_TRIANGLE;
+				break;
+			case SDLK_5:
+				render_method = RENDER_FILL_TRIANGLE_FLAT;
+				break;
+			case SDLK_6:
+				render_method = RENDER_FILL_TRIANGLE_NORMAL;
+				break;
+			case SDLK_7:
+				render_method = RENDER_FILL_TRIANGLE_GOROUD;
+				break;
+
+			// Culling method
+			case SDLK_c:
+				cull_method = CULL_BACKFACE;
+				break;
+			case SDLK_d:
+				cull_method = CULL_NONE;
+				break;
+
+			// Other
+			case SDLK_SPACE:
+				transform = !transform;
+				break;
+			case SDLK_p:
+				painter = !painter;
+				break;
 		}
 		break;
 	case SDL_MOUSEBUTTONDOWN:
@@ -140,7 +141,6 @@ void update(void) {
 	mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
 	mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
-
 	// Load all triangles to render
 	int num_mesh_faces = array_length(mesh.faces);
 	for(int i=0; i<num_mesh_faces; i++)
@@ -152,12 +152,19 @@ void update(void) {
 		face_vertices[1] = mesh.vertices[face.b-1];
 		face_vertices[2] = mesh.vertices[face.c-1];
 
+		vec3_t face_normals[3];
+		face_normals[0] = mesh.normals[face.a-1];
+		face_normals[1] = mesh.normals[face.b-1];
+		face_normals[2] = mesh.normals[face.c-1];
+
+
 		// Apply the transformatiosn for each vertex of the face
-		vec4_t transformed_vertices[3];
+		vec4_t transformed_vertices[3], transformed_normals[3];
 		for(int j=0; j<3; j++)
 		{
 			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
-
+			vec4_t transformed_normal = vec4_from_vec3(face_normals[j]);
+			
             // Create a World matrix
             mat4_t world_matrix = mat4_make_identity();
             world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
@@ -167,10 +174,12 @@ void update(void) {
             world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
 
             // Apply transformations to the mesh
-            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);            
+            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
+			transformed_normal = mat4_mul_vec4(world_matrix, transformed_normal);
 
 			// Save the transformed vertex
 			transformed_vertices[j] = transformed_vertex;
+			transformed_normals[j] = transformed_normal;
 		}
 
 		
@@ -192,31 +201,20 @@ void update(void) {
 		// Find the avg_depth of face
 		float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z)/3;
 
-
-		// Find intensity of this face
-		float cos_theta = -vec3_dot(normal, light.direction) / ( vec3_length(light.direction) * vec3_length(normal));
-		float intensity = cos_theta > 0.4 ? cos_theta : 0.4;
-
-
-
 		// Project all vertices of current triangle
-		vec4_t projected_vertices[3];
+		vec4_t projected_vertices[3], projected_normals[3];
 		for(int j=0; j<3; j++)
 		{
-			// Project and translate
-			projected_vertices[j] = mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]); 	// Main call in this for loop 
+			projected_vertices[j] = project_point_to_screen(proj_matrix, transformed_vertices[j]);
 
-			// Scale into the view
-			projected_vertices[j].x *= window_width/2.0;
-			projected_vertices[j].y *= window_height/2.0; 
 
-			// Inverting the y coordinates
-			projected_vertices[j].y *= -1;
-
-			// Translate vertex to middle of the screen
-			projected_vertices[j].x += window_width/2;
-			projected_vertices[j].y += window_height/2;
+			vec3_t normal_point = vec3_add(
+				vec3_from_vec4(transformed_vertices[j]), 
+				vec3_mul(face_normals[j], 0.001)
+			);
+			projected_normals[j] = project_point_to_screen(proj_matrix, vec4_from_vec3(normal_point));		// get the end-point of normal
 		}
+		
 
 		// Push projected triangle to triangles_to_render array
 		triangle_t projected_triangle = { 
@@ -225,11 +223,23 @@ void update(void) {
 				{projected_vertices[1].x, projected_vertices[1].y}, 
 				{projected_vertices[2].x, projected_vertices[2].y}
 			}, 
-			.color = light_apply_intensity(face.color, intensity), 
+			.color = face.color, 
 			.avg_depth = avg_depth, 
-			// .intensity = intensity
+			.normals[0] = vec3_from_vec4(transformed_normals[0]), 
+			.normals[1] = vec3_from_vec4(transformed_normals[1]), 
+			.normals[2] = vec3_from_vec4(transformed_normals[2]), 
+			.face_normal = normal
 		};
 		array_push(triangles_to_render, projected_triangle);
+		
+		// Push the projected normal points to normals_to_render array
+		vec2_t *proj_normals_vec2 = NULL;
+		for(int j=0; j<3; j++)
+		{
+			vec2_t point = { .x = projected_normals[j].x, .y = projected_normals[j].y };
+			array_push(proj_normals_vec2, point);
+		};
+		array_push(normals_to_render, proj_normals_vec2);
 	}
 
 	// Sort all triangles to render in dsc order of their avg_depth
@@ -250,8 +260,6 @@ void update(void) {
 		}
 }
 
-uint32_t colors[6] = {0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffff00, 0xffff00ff, 0xff00ffff};
-
 // Render things on the screen
 void render(void) {
 	draw_grid();
@@ -261,10 +269,12 @@ void render(void) {
 	for(int i=0; i<num_triangles; i++)
 	{
 		triangle_t triangle = triangles_to_render[i];
+		vec2_t *normal = normals_to_render[i];
 		switch(render_method)
 		{
 		case RENDER_WIRE_VERTEX:
 			draw_triangle(triangle, 0xffff0000);
+			// draw_vertices(triangle, 0xffff00ff);
 			for(int j=0; j<3; j++)
 				draw_rect(triangle.vertices[j].x, triangle.vertices[j].y, 5, 5, 0xffff00ff);
 			break;
@@ -273,20 +283,22 @@ void render(void) {
 			break;
 		case RENDER_FILL_TRIANGLE:
 			draw_filled_triangle(triangle, triangle.color);
-			// draw_filled_triangle_goroud(triangle, triangle.color);
 			break;
 		case RENDER_FILL_TRIANGLE_WIRE:
 			draw_filled_triangle(triangle, triangle.color);
-			// draw_filled_triangle_goroud(triangle, triangle.color);
 			draw_triangle(triangle, 0xffff0000);
 			break;
-		case RENDER_WIRE_NORMALS:
-			draw_triangle(triangle, 0xffff0000);
-			// TODO: draw normals
+		case RENDER_FILL_TRIANGLE_FLAT:
+			draw_filled_triangle_flat(triangle, triangle.color);
+			break;
+		case RENDER_FILL_TRIANGLE_NORMAL:
+			draw_filled_triangle_flat(triangle, triangle.color);
+			draw_normals(triangle, normal, triangle.color);
+			break;
+		case RENDER_FILL_TRIANGLE_GOROUD:
+			draw_filled_triangle_goroud(triangle, triangle.color);
 			break;
 		}
-		// draw_filled_triangle(triangle, 0xffaaaa00);
-		// draw_triangle(triangle, 0x00000000);
 	}
 
 	// Deallocate the triangle array
