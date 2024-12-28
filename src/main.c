@@ -201,6 +201,10 @@ void update(void) {
 		// Find the avg_depth of face
 		float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z)/3;
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> refs/remotes/origin/Gorould
 		// Project all vertices of current triangle
 		vec4_t projected_vertices[3], projected_normals[3];
 		for(int j=0; j<3; j++)
@@ -293,7 +297,11 @@ void render(void) {
 			break;
 		case RENDER_FILL_TRIANGLE_NORMAL:
 			draw_filled_triangle_flat(triangle, triangle.color);
+<<<<<<< HEAD
 			draw_normals(triangle, normal, triangle.color);
+=======
+			// draw_normals(triangle, 0xff0000ff);
+>>>>>>> refs/remotes/origin/Gorould
 			break;
 		case RENDER_FILL_TRIANGLE_GOROUD:
 			draw_filled_triangle_goroud(triangle, triangle.color);
