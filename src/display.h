@@ -7,7 +7,7 @@
 #include "triangle.h"
 #include "matrix.h"
 
-#define FPS 30
+#define FPS 60
 #define FRAME_TARGET_TIME (1000/FPS)
 
 extern SDL_Window *window;
@@ -30,8 +30,9 @@ enum render_method {
     RENDER_FILL_TRIANGLE_WIRE, 
     RENDER_FILL_TRIANGLE, 
     RENDER_FILL_TRIANGLE_FLAT, 
-    RENDER_FILL_TRIANGLE_NORMAL, 
-    RENDER_FILL_TRIANGLE_GOROUD
+    RENDER_TEXTURE_TRIANGLE, 
+    RENDER_TEXTURE_TRIANGLE_WIRE, 
+    TEST, 
 };
 extern enum render_method render_method;
 

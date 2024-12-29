@@ -9,7 +9,6 @@
 extern vec3_t cube_vertices[N_CUBE_VERTICES];
 extern face_t cube_faces[N_CUBE_FACES];
 
-
 typedef struct {
     vec3_t *vertices;
     vec3_t *normals;
@@ -28,3 +27,19 @@ void load_obj_file_data(char *filename);
 void print_mesh(void);
 
 #endif
+
+
+//                          *** Some Reference Charts ***                               
+// 
+//                       ||                             ||                                 
+//      7_________5      ||         +y                  ||    (1, 0) _ _ _ _ _ (1, 1)
+//      /|       /|      ||        A                    ||          |_|_|_|_|_|
+//   2 /_|_____3/ |      ||        |   +z               ||          |_|_|_|_|_|
+//    |  |     |  |      ||        |  /                 ||          |_|_|_|_|_|
+//    | 8|_____|__|      ||        | /                  ||          |_|_|_|_|_|
+//    | /      | /6      ||        |/                   ||    (0, 0)            (0, 1)
+//    |/_______|/        ||        /----------> +x      ||                                        
+//   1         4         ||                             ||                                      
+//                       ||                             ||                                                               
+//  <--Cube indices-->   ||   <--World coordinates-->   ||   <--Texture coordinates-->          
+// 

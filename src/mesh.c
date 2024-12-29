@@ -29,24 +29,39 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
 
 face_t cube_faces[N_CUBE_FACES] = {
     // front 
-    {.a = 1, .b = 2, .c = 3, .color = 0xffff0000}, 
-    {.a = 3, .b = 4, .c = 1, .color = 0xffff0000}, 
+    {.a = 1, .b = 2, .c = 3, .color = 0xffff0000, .a_uv = {0, 0}, .b_uv = {1, 0}, .c_uv = {1, 1} }, 
+    {.a = 3, .b = 4, .c = 1, .color = 0xffff0000, .a_uv = {1, 1}, .b_uv = {0, 1}, .c_uv = {0, 0} }, 
     // back 
-    {.a = 5, .b = 7, .c = 8, .color = 0xff00ff00}, 
-    {.a = 5, .b = 8, .c = 6, .color = 0xff00ff00}, 
+    {.a = 5, .b = 7, .c = 8, .color = 0xff00ff00, .a_uv = {1, 0}, .b_uv = {1, 1}, .c_uv = {0, 1} }, 
+    {.a = 5, .b = 8, .c = 6, .color = 0xff00ff00, .a_uv = {1, 0}, .b_uv = {0, 1}, .c_uv = {0, 0} }, 
     // right 
-    {.a = 3, .b = 5, .c = 4, .color = 0xff0000ff}, 
-    {.a = 5, .b = 6, .c = 4, .color = 0xff0000ff}, 
+    {.a = 3, .b = 5, .c = 4, .color = 0xff0000ff, .a_uv = {1, 0}, .b_uv = {1, 1}, .c_uv = {0, 0} }, 
+    {.a = 5, .b = 6, .c = 4, .color = 0xff0000ff, .a_uv = {1, 1}, .b_uv = {0, 1}, .c_uv = {0, 0} }, 
     // left 
-    {.a = 7, .b = 2, .c = 1, .color = 0xffffff00}, 
-    {.a = 1, .b = 8, .c = 7, .color = 0xffffff00}, 
+    {.a = 7, .b = 2, .c = 1, .color = 0xffffff00, .a_uv = {1, 0}, .b_uv = {1, 1}, .c_uv = {0, 1} }, 
+    {.a = 1, .b = 8, .c = 7, .color = 0xffffff00, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0} }, 
     // top 
-    {.a = 2, .b = 7, .c = 5, .color = 0xff00ffff}, 
-    {.a = 2, .b = 5, .c = 3, .color = 0xff00ffff}, 
+    {.a = 2, .b = 7, .c = 5, .color = 0xff00ffff, .a_uv = {0, 0}, .b_uv = {1, 0}, .c_uv = {1, 1} }, 
+    {.a = 2, .b = 5, .c = 3, .color = 0xff00ffff, .a_uv = {0, 0}, .b_uv = {1, 1}, .c_uv = {1, 0} }, 
     // bottom 
-    {.a = 1, .b = 4, .c = 6, .color = 0xffff00ff}, 
-    {.a = 1, .b = 6, .c = 8, .color = 0xffff00ff}, 
+    {.a = 1, .b = 4, .c = 6, .color = 0xffff00ff, .a_uv = {1, 0}, .b_uv = {1, 1}, .c_uv = {0, 1} }, 
+    {.a = 1, .b = 6, .c = 8, .color = 0xffff00ff, .a_uv = {1, 0}, .b_uv = {0, 1}, .c_uv = {0, 0} }, 
 };
+
+//                          *** Some Reference Charts ***                               
+// 
+//                       ||                             ||                                 
+//      7_________5      ||         +y                  ||    (1, 0) _ _ _ _ _ (1, 1)
+//      /|       /|      ||        A                    ||          |_|_|_|_|_|
+//   2 /_|_____3/ |      ||        |   +z               ||          |_|_|_|_|_|
+//    |  |     |  |      ||        |  /                 ||          |_|_|_|_|_|
+//    | 8|_____|__|      ||        | /                  ||          |_|_|_|_|_|
+//    | /      | /6      ||        |/                   ||    (0, 0)            (0, 1)
+//    |/_______|/        ||        /----------> +x      ||                                        
+//   1         4         ||                             ||                                        
+//     <--Cube-->        ||   <--World coordinates-->   ||   <--Texture coordinates-->
+// 
+// 
 
 mesh_t mesh = {
     .vertices = NULL, 
@@ -54,8 +69,12 @@ mesh_t mesh = {
     .normals = NULL, 
     .scale = {1.0, 1.0, 1.0}, 
     .rotation = {0, 0, 0}, 
-    .translation = {0.0, -1.0, 5.0}
+    .translation = {0.0, -3.0, 10.0}
 };
+
+vec3_t gon_pos = {0, 0.1, 5};
+vec3_t car_pos = {0, 0, 100};
+vec3_t f22_pos = {0.0, -1.0, 5.0};
 
 void load_cube_mesh_data(void) {
     // load all cube vertices to mesh
@@ -105,7 +124,6 @@ char **tokenize(char *line, char delimiter, int size) {
         }
 
         array_push(str, line[i]);
-        // curr = strcat(curr, delimiter_str);
     }
     
     // Push str to tokens array
@@ -169,45 +187,38 @@ void load_obj_file_data(char *filename) {
             {
                 char **sub_tokens = tokenize(tokens[i], '/', strlen(tokens[i]));
                 vertex_indices[i-1] = atoi(sub_tokens[0]);
-                // texture_indices[i-1] = atoi( tokenize(tokens[i], '/', strlen(tokens[i]))[1]);
-                normal_indices[i-1] = atoi(tokenize(tokens[i], '/', strlen(tokens[i]))[2]);
+                // texture_indices[i-1] = atoi( tokenize(tokens[i], '/', strlen(tokens[i]))[1] );
+                normal_indices[i-1] = atoi( tokenize(tokens[i], '/', strlen(tokens[i]))[2] );
                 array_free(sub_tokens);
             }
 
-            face_t face;
-            face.a = vertex_indices[0];
-            face.b = vertex_indices[1];
-            face.c = vertex_indices[2];
-            face.normal_a = normal_indices[0];
-            face.normal_b = normal_indices[1];
-            face.normal_c = normal_indices[2];
-            face.color = 0xffffffff;
-
-            array_push(mesh.faces, face);
-            continue;
-
-            if(array_length(tokens) < 5)
+            for(int i=0; i<array_length(tokens)-3; i++)
             {
-                array_free(tokens);
-                array_free(line);
-                continue;
-            }
-            
-            face.a = vertex_indices[0];
-            face.b = vertex_indices[2];
-            face.c = vertex_indices[3];
-            face.color = 0xffffffff;
+                face_t face;
+                face.a = vertex_indices[0];
+                face.b = vertex_indices[1+i];
+                face.c = vertex_indices[2+i];
+                face.normal_a = normal_indices[0];
+                face.normal_b = normal_indices[1+i];
+                face.normal_c = normal_indices[2+i];
+                face.color = 0xffffff00;
 
-            array_push(mesh.faces, face);
-            array_free(tokens);
-            array_free(line);
-            continue;
+                array_push(mesh.faces, face);
+            }
         }
 
         array_free(tokens);
         array_free(line);
     }
     
+    if(strcmp(filename, "./assets/gon.obj") == 0)
+        mesh.translation = gon_pos;
+    if(strcmp(filename, "./assets/car.obj") == 0)
+        mesh.translation = car_pos;
+    if(strcmp(filename, "./assets/f22.obj") == 0)
+        mesh.translation = f22_pos;
+    
+
     // 3. Close the file
     close(fd);
 }

@@ -1,7 +1,7 @@
 #include "light.h"
 
 light_t light = {
-    {0, -4, 10}
+    {1, -4, 10}
 };
 
 uint32_t light_apply_intensity(uint32_t color, float intensity) {

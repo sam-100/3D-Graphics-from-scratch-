@@ -3,15 +3,18 @@
 
 #include <stdint.h>
 #include "vector.h"
+#include "texture.h"
 
 typedef struct {
     int a, b, c;
+    tex2_t a_uv, b_uv, c_uv;
     uint32_t color;
     int normal_a, normal_b, normal_c;
 } face_t;
 
 typedef struct {
     vec2_t vertices[3];
+    tex2_t texcoords[3];
     uint32_t color;
     float avg_depth;
     vec3_t normals[3];
@@ -19,14 +22,18 @@ typedef struct {
 } triangle_t;
 
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // No shading functions 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void draw_filled_triangle(triangle_t triangle, uint32_t color);
-void fill_flat_bottom_triangle(vec2_t a, vec2_t b, vec2_t c, uint32_t color);
-void fill_flat_top_triangle(vec2_t a, vec2_t b, vec2_t c, uint32_t color);
+void fill_flat_bottom_triangle(triangle_t triangle, uint32_t color);
+void fill_flat_top_triangle(triangle_t triangle, uint32_t color);
 
+void draw_textured_triangle(triangle_t triangle, uint32_t *texture);
+void fill_flat_bottom_textured_triangle(triangle_t triangle, uint32_t *texture);
+void fill_flat_top_textured_triangle(triangle_t triangle, uint32_t *texture);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Flat shading functions 

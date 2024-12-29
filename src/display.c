@@ -124,6 +124,7 @@ void draw_line(vec2_t a, vec2_t b, uint32_t color) {
     }
 }
 
+
 void draw_triangle(triangle_t triangle, uint32_t color) {
 	draw_line(triangle.vertices[0], triangle.vertices[1], color);
 	draw_line(triangle.vertices[1], triangle.vertices[2], color);

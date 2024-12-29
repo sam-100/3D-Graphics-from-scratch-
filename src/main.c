@@ -19,7 +19,6 @@ uint32_t previous_time = 0;
 mat4_t proj_matrix;
 
 triangle_t *triangles_to_render = NULL;
-vec2_t **normals_to_render = NULL;
 
 void setup(void) {
 	color_buffer = (uint32_t*) malloc(sizeof(uint32_t) * window_width * window_height);
@@ -37,11 +36,12 @@ void setup(void) {
 	float zfar = 100.0;
 	proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
+	// Load the texture into memory
+	mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+
 	// Load the cube in our mesh data structure 
-	// load_cube_mesh_data();
-	load_obj_file_data("./assets/f22.obj");
-	// print_mesh();
-	// exit(100);
+	load_cube_mesh_data();
+	// load_obj_file_data("./assets/gon.obj");
 }
 
 // processes all inputs
@@ -62,6 +62,9 @@ void process_input(void) {
 				break;
 
 			// Render method
+			case SDLK_0:
+				render_method = TEST;
+				break;
 			case SDLK_1:
 				render_method = RENDER_WIRE;
 				break;
@@ -78,10 +81,28 @@ void process_input(void) {
 				render_method = RENDER_FILL_TRIANGLE_FLAT;
 				break;
 			case SDLK_6:
-				render_method = RENDER_FILL_TRIANGLE_NORMAL;
+				render_method = RENDER_TEXTURE_TRIANGLE;
 				break;
 			case SDLK_7:
-				render_method = RENDER_FILL_TRIANGLE_GOROUD;
+				render_method = RENDER_TEXTURE_TRIANGLE_WIRE;
+				break;
+			
+
+			// Camera position
+			case SDLK_RIGHT:
+				camera_pos.x++;
+				break;
+			case SDLK_LEFT:
+				camera_pos.x--;
+				break;
+
+			case SDLK_m:
+				printf("zoom-in\n");
+				mesh.translation.z += 1;
+				break;
+			case SDLK_n:
+				printf("zoom-out\n");
+				mesh.translation.z -= 1;
 				break;
 
 			// Culling method
@@ -152,18 +173,17 @@ void update(void) {
 		face_vertices[1] = mesh.vertices[face.b-1];
 		face_vertices[2] = mesh.vertices[face.c-1];
 
-		vec3_t face_normals[3];
-		face_normals[0] = mesh.normals[face.a-1];
-		face_normals[1] = mesh.normals[face.b-1];
-		face_normals[2] = mesh.normals[face.c-1];
+		// vec3_t face_normals[3];
+		// face_normals[0] = mesh.normals[face.a-1];
+		// face_normals[1] = mesh.normals[face.b-1];
+		// face_normals[2] = mesh.normals[face.c-1];
 
 
 		// Apply the transformatiosn for each vertex of the face
-		vec4_t transformed_vertices[3], transformed_normals[3];
+		vec4_t transformed_vertices[3];
 		for(int j=0; j<3; j++)
 		{
 			vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
-			vec4_t transformed_normal = vec4_from_vec3(face_normals[j]);
 			
             // Create a World matrix
             mat4_t world_matrix = mat4_make_identity();
@@ -175,11 +195,9 @@ void update(void) {
 
             // Apply transformations to the mesh
             transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
-			transformed_normal = mat4_mul_vec4(world_matrix, transformed_normal);
 
 			// Save the transformed vertex
 			transformed_vertices[j] = transformed_vertex;
-			transformed_normals[j] = transformed_normal;
 		}
 
 		
@@ -202,19 +220,9 @@ void update(void) {
 		float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z)/3;
 
 		// Project all vertices of current triangle
-		vec4_t projected_vertices[3], projected_normals[3];
+		vec4_t projected_vertices[3];
 		for(int j=0; j<3; j++)
-		{
-			projected_vertices[j] = project_point_to_screen(proj_matrix, transformed_vertices[j]);
-
-
-			vec3_t normal_point = vec3_add(
-				vec3_from_vec4(transformed_vertices[j]), 
-				vec3_mul(face_normals[j], 0.001)
-			);
-			projected_normals[j] = project_point_to_screen(proj_matrix, vec4_from_vec3(normal_point));		// get the end-point of normal
-		}
-		
+			projected_vertices[j] = project_point_to_screen(proj_matrix, transformed_vertices[j]);		
 
 		// Push projected triangle to triangles_to_render array
 		triangle_t projected_triangle = { 
@@ -225,21 +233,10 @@ void update(void) {
 			}, 
 			.color = face.color, 
 			.avg_depth = avg_depth, 
-			.normals[0] = vec3_from_vec4(transformed_normals[0]), 
-			.normals[1] = vec3_from_vec4(transformed_normals[1]), 
-			.normals[2] = vec3_from_vec4(transformed_normals[2]), 
 			.face_normal = normal
 		};
 		array_push(triangles_to_render, projected_triangle);
 		
-		// Push the projected normal points to normals_to_render array
-		vec2_t *proj_normals_vec2 = NULL;
-		for(int j=0; j<3; j++)
-		{
-			vec2_t point = { .x = projected_normals[j].x, .y = projected_normals[j].y };
-			array_push(proj_normals_vec2, point);
-		};
-		array_push(normals_to_render, proj_normals_vec2);
 	}
 
 	// Sort all triangles to render in dsc order of their avg_depth
@@ -269,7 +266,6 @@ void render(void) {
 	for(int i=0; i<num_triangles; i++)
 	{
 		triangle_t triangle = triangles_to_render[i];
-		vec2_t *normal = normals_to_render[i];
 		switch(render_method)
 		{
 		case RENDER_WIRE_VERTEX:
@@ -291,12 +287,20 @@ void render(void) {
 		case RENDER_FILL_TRIANGLE_FLAT:
 			draw_filled_triangle_flat(triangle, triangle.color);
 			break;
-		case RENDER_FILL_TRIANGLE_NORMAL:
-			draw_filled_triangle_flat(triangle, triangle.color);
-			draw_normals(triangle, normal, triangle.color);
+		case RENDER_TEXTURE_TRIANGLE:
+			draw_textured_triangle(triangle, mesh_texture);
 			break;
-		case RENDER_FILL_TRIANGLE_GOROUD:
-			draw_filled_triangle_goroud(triangle, triangle.color);
+		case RENDER_TEXTURE_TRIANGLE_WIRE:
+			draw_textured_triangle(triangle, mesh_texture);
+			draw_triangle(triangle, 0xff0000ff);
+			break;
+		case TEST:
+			triangle_t test = {
+				.vertices = { {100, 400}, {300, 100}, {500, 400}},
+				.texcoords = { {0, 0}, {1, 0.5}, {0, 1}}
+			};
+			draw_textured_triangle(test, mesh_texture);
+			// draw_filled_triangle(test, 0xff00ffff);
 			break;
 		}
 	}

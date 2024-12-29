@@ -1,5 +1,5 @@
 build:
-	gcc -Wall -std=c99 src/*.c -lSDL2 -lm -o renderer
+	gcc -Wall -std=c99 src/*.c -lSDL2 -lm -o renderer -fno-stack-protector
 
 gdb:
 	gcc -Wall -std=c99 src/*.c -lSDL2 -lm -o renderer_gdb -g
